@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">One Rep Max</string>
+    <string name="title">1RM Calculator</string>
+    <string name="weight">Weight (lbs or kg)</string>
+    <string name="reps">Reps</string>
+    <string name="calculate_1rm">Calculate 1RM</string>
+    <string name="estimated_1rm">Estimated 1RM:</string>
 </resources>

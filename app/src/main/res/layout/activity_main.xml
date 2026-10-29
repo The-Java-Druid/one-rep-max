@@ -9,7 +9,7 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="1RM Calculator"
+        android:text="@string/title"
         android:textSize="24sp"
         android:textStyle="bold"
         android:layout_marginBottom="32dp"/>
@@ -18,7 +18,7 @@
         android:id="@+id/etWeight"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Weight (lbs or kg)"
+        android:hint="@string/weight"
         android:inputType="numberDecimal"
         android:layout_marginBottom="16dp"/>
 
@@ -26,7 +26,7 @@
         android:id="@+id/etReps"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Reps"
+        android:hint="@string/reps"
         android:inputType="number"
         android:layout_marginBottom="24dp"/>
 
@@ -34,13 +34,13 @@
         android:id="@+id/btnCalculate"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Calculate 1RM"
+        android:text="@string/calculate_1rm"
         android:layout_marginBottom="32dp"/>
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Estimated 1RM:"
+        android:text="@string/estimated_1rm"
         android:textSize="16sp"
         android:layout_marginBottom="8dp"/>
 
