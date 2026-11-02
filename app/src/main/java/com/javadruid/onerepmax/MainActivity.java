@@ -10,6 +10,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 public class MainActivity extends AppCompatActivity {
@@ -82,50 +83,50 @@ public class MainActivity extends AppCompatActivity {
     private void populateBreakdownTable(double oneRepMax) {
         // Clear any previous rows
         layoutBreakdownContainer.removeAllViews();
-
         for (int i = 0; i < percentages.length; i++) {
-            int repNum = i + 1;
-            int pct = percentages[i];
-            double targetWeight = getTargetWeight(oneRepMax, pct);
-
-            // Create a horizontal row layout for each rep level
-            LinearLayout rowLayout = new LinearLayout(this);
-            rowLayout.setLayoutParams(new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT
-            ));
-            rowLayout.setOrientation(LinearLayout.HORIZONTAL);
-            rowLayout.setPadding(0, 8, 0, 8);
-
-            // Reps Text
-            TextView tvRepCol = new TextView(this);
-            tvRepCol.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
-            tvRepCol.setText(String.valueOf(repNum));
-            tvRepCol.setTextSize(14);
-
-            // Percentage Text
-            TextView tvPctCol = new TextView(this);
-            tvPctCol.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
-            tvPctCol.setText(pct + "%");
-            tvPctCol.setTextSize(14);
-            tvPctCol.setGravity(android.view.Gravity.CENTER);
-
-            // Target Weight Text
-            TextView tvWeightCol = new TextView(this);
-            tvWeightCol.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
-            tvWeightCol.setText(String.format("%.1f", targetWeight));
-            tvWeightCol.setTextSize(14);
-            //tvWeightCol.setTextStyle(android.graphics.Typeface.BOLD);
-            tvWeightCol.setGravity(android.view.Gravity.END);
-
-            // Add columns to row
-            rowLayout.addView(tvRepCol);
-            rowLayout.addView(tvPctCol);
-            rowLayout.addView(tvWeightCol);
-
-            // Add row to container
-            layoutBreakdownContainer.addView(rowLayout);
+            final int pct = percentages[i];
+            populateRow(pct, i + 1, getTargetWeight(oneRepMax, pct));
         }
+    }
+
+    private void populateRow(int pct, int repNum, double targetWeight) {
+        final LinearLayout rowLayout = createRowLayout();
+        // Reps Text
+        final TextView tvRepCol = createTextView(String.valueOf(repNum));
+        // Percentage Text
+        final TextView tvPctCol = createTextView(pct + "%");
+        tvPctCol.setGravity(android.view.Gravity.CENTER);
+        // Target Weight Text
+        final TextView tvWeightCol = createTextView(String.format("%.1f", targetWeight));
+        tvWeightCol.setGravity(android.view.Gravity.END);
+        // Add columns to row
+        rowLayout.addView(tvRepCol);
+        rowLayout.addView(tvPctCol);
+        rowLayout.addView(tvWeightCol);
+        // Add row to container
+        layoutBreakdownContainer.addView(rowLayout);
+    }
+
+    @NonNull
+    private LinearLayout createRowLayout() {
+        // Create a horizontal row layout for each rep level
+        final LinearLayout result = new LinearLayout(this);
+        result.setLayoutParams(new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+        ));
+        result.setOrientation(LinearLayout.HORIZONTAL);
+        result.setPadding(0, 8, 0, 8);
+        return result;
+    }
+
+    @NonNull
+    private TextView createTextView(String text) {
+        final TextView result = new TextView(this);
+        result.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+        result.setTextSize(14);
+        result.setText(text);
+        return result;
     }
 
     private static double getOneRepMax(double weight, int reps) {
