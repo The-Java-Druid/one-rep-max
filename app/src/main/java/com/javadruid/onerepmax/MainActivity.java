@@ -75,10 +75,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private static double getOneRepMax(double weight, int reps) {
-        // Epley Formula: Weight * (1 + Reps / 30.0)
-        return weight * (1.0 + (reps / 30.0));
-    }
 
     private void populateBreakdownTable(double oneRepMax) {
         // Clear any previous rows
@@ -87,7 +83,7 @@ public class MainActivity extends AppCompatActivity {
         for (int i = 0; i < percentages.length; i++) {
             int repNum = i + 1;
             int pct = percentages[i];
-            double targetWeight = oneRepMax * (pct / 100.0);
+            double targetWeight = getTargetWeight(oneRepMax, pct);
 
             // Create a horizontal row layout for each rep level
             LinearLayout rowLayout = new LinearLayout(this);
@@ -127,5 +123,14 @@ public class MainActivity extends AppCompatActivity {
             // Add row to container
             layoutBreakdownContainer.addView(rowLayout);
         }
+    }
+
+    private static double getOneRepMax(double weight, int reps) {
+        // Epley Formula: Weight * (1 + Reps / 30.0)
+        return weight * (1.0 + (reps / 30.0));
+    }
+
+    private static double getTargetWeight(double oneRepMax, int pct) {
+        return oneRepMax * (pct / 100.0);
     }
 }
