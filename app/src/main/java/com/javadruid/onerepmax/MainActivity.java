@@ -1,7 +1,9 @@
 package com.javadruid.onerepmax;
 
 import android.os.Bundle;
+import android.view.KeyEvent;
 import android.view.View;
+import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
@@ -36,7 +38,8 @@ public class MainActivity extends AppCompatActivity {
 
         // Set click listener for the calculate button
         btnCalculate.setOnClickListener(this::onCalculateClick);
-    }
+        // Trigger calculation when the user presses "Enter" / "Done" on the keyboard in reps field
+        etReps.setOnEditorActionListener(this::onEditorEnter);    }
 
     private void onCalculateClick(View v) {
         calculateOneRepMax();
@@ -132,5 +135,14 @@ public class MainActivity extends AppCompatActivity {
 
     private static double getTargetWeight(double oneRepMax, int pct) {
         return oneRepMax * (pct / 100.0);
+    }
+
+    private boolean onEditorEnter(TextView v, int actionId, KeyEvent event) {
+        if (actionId == EditorInfo.IME_ACTION_DONE ||
+                (event != null && event.getKeyCode() == KeyEvent.KEYCODE_ENTER && event.getAction() == KeyEvent.ACTION_DOWN)) {
+            onCalculateClick(v);
+            return true;
+        }
+        return false;
     }
 }
