@@ -1,6 +1,7 @@
 package com.javadruid.onerepmax;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
@@ -10,8 +11,14 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
+import com.google.android.gms.ads.MobileAds;
+import com.google.android.gms.ads.initialization.InitializationStatus;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -29,6 +36,9 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        // Enable edge-to-edge layout for Android 15+
+        EdgeToEdge.enable(this);
+        new Thread(this::initializeAds).start();
 
         // Initialize UI components
         etWeight = findViewById(R.id.etWeight);
@@ -146,4 +156,19 @@ public class MainActivity extends AppCompatActivity {
         }
         return false;
     }
+
+    private void initializeAds() {
+        MobileAds.initialize(this, MainActivity::onAdInitialized);
+        runOnUiThread(this::loadAd);
+    }
+
+    private void loadAd() {
+        ((AdView) findViewById(R.id.adView))
+                .loadAd(new AdRequest.Builder().build());
+    }
+
+    private static void onAdInitialized(InitializationStatus initializationStatus) {
+        Log.i("OneRepMax", "Initialized ad manager with status: " + initializationStatus.getAdapterStatusMap());
+    }
+
 }
