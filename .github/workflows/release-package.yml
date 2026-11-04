@@ -1,0 +1,87 @@
+name: Android CI
+on:
+  workflow_dispatch:
+  release:
+    types: [published]
+jobs:
+  build:
+    name: Job 1 - Build Signed AAB
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v7
+    - name: set up JDK
+      uses: actions/setup-java@v6
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: gradle
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v6
+      with:
+        cache-cleanup: always
+    - name: Build with Gradle
+      run: ./gradlew build -x test
+    - name: Build prodRelease
+      run: ./gradlew -Pversion=${{ github.run_number }} -PreleaseName=${{ github.event.release.name }} bundleRelease
+      continue-on-error: false  # Fail if build fails
+    - name: Sign AAb
+      id: sign
+      uses: r0adkll/sign-android-release@v1
+      with:
+        releaseDirectory: app/build/outputs/bundle/release
+        signingKeyBase64: ${{ secrets.KEYSTORE }}
+        alias: ${{ secrets.SIGNING_KEY_ALIAS }}
+        keyStorePassword: ${{ secrets.SIGNING_STORE_PASSWORD }}
+        keyPassword: ${{ secrets.SIGNING_KEY_PASSWORD }}
+    - name: Upload app bundle as artifact
+      uses: actions/upload-artifact@v7
+      with:
+        name: app-bundle
+        path: app/build/outputs/bundle/release/app-release.aab
+        retention-days: 2
+      continue-on-error: false  # Fail if upload fails
+    - name: Upload mapping.txt as artifact
+      uses: actions/upload-artifact@v7
+      with:
+        name: mapping
+        path: app/build/outputs/mapping/release/mapping.txt
+        retention-days: 2
+      continue-on-error: false  # Fail if upload fails
+    - run: echo Build status report=${{ job.status }}
+  deploy:
+    name: Job 2 - Deploy aab to playstore
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+    - name: Download app bundle from artifact
+      uses: actions/download-artifact@v8
+      with:
+        name: app-bundle
+    - name: Download mapping from artifact
+      uses: actions/download-artifact@v8
+      with:
+        name: mapping
+    - name: Create whatsnew directory
+      run: mkdir -p whatsnew
+    - name: Get Release Notes and Save to whatsnew-en-US
+      env:
+        RELEASE_BODY: ${{ github.event.release.body }}
+      run: |
+        mkdir -p whatsnew
+        if [ ${#RELEASE_BODY} -gt 500 ]; then
+          echo "${RELEASE_BODY:0:497}..." > whatsnew/whatsnew-en-US
+        else
+          echo "$RELEASE_BODY" > whatsnew/whatsnew-en-US
+        fi
+    - name: Publish to Play Store
+      uses: r0adkll/upload-google-play@v1
+      with:
+         serviceAccountJsonPlainText: ${{ secrets.SERVICE_ACCOUNT_JSON }}
+         packageName: com.javadruid.onerepmax
+         releaseFiles: ${{ github.workspace }}/app-release.aab
+         tracks: production
+         whatsNewDirectory: whatsnew
+         mappingFile: ${{ github.workspace }}/mapping.txt
+      continue-on-error: false  # Fail if deployment fails
