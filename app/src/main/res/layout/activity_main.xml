@@ -1,107 +1,110 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:ads="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:fillViewport="true">
-
-    <LinearLayout
+    android:layout_height="match_parent">
+    <!-- ScrollView containing your original calculator UI -->
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="24dp"
-        android:gravity="center_horizontal">
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/title"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        android:layout_marginBottom="32dp"/>
-
-    <EditText
-        android:id="@+id/etWeight"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:autofillHints="weight"
-        android:hint="@string/weight"
-        android:inputType="numberDecimal"
-        android:layout_marginBottom="16dp"/>
-
-    <EditText
-        android:id="@+id/etReps"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:autofillHints="reps"
-        android:hint="@string/reps"
-        android:inputType="number"
-        android:imeOptions="actionDone"
-        android:layout_marginBottom="24dp"/>
-
-    <Button
-        android:id="@+id/btnCalculate"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="@string/calculate_1rm"
-        android:layout_marginBottom="32dp"/>
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/estimated_1rm"
-        android:textSize="16sp"
-        android:layout_marginBottom="8dp"/>
-
-        <TextView
-            android:id="@+id/tvResult"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="--"
-            android:textSize="32sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="24dp"/>
-
-        <!-- Table Header -->
+        android:layout_height="match_parent"
+        android:layout_above="@id/adView"
+        android:fillViewport="true">
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:paddingBottom="8dp"
-            android:layout_marginBottom="8dp">
-
+            android:orientation="vertical"
+            android:padding="24dp"
+            android:gravity="center_horizontal">
             <TextView
-                android:layout_width="0dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="@string/reps"
+                android:text="@string/title"
+                android:textSize="24sp"
                 android:textStyle="bold"
-                android:textSize="14sp"/>
-
+                android:layout_marginBottom="32dp"/>
+            <EditText
+                android:id="@+id/etWeight"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:autofillHints="weight"
+                android:hint="@string/weight"
+                android:inputType="numberDecimal"
+                android:layout_marginBottom="16dp"/>
+            <EditText
+                android:id="@+id/etReps"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:autofillHints="reps"
+                android:hint="@string/reps"
+                android:inputType="number"
+                android:imeOptions="actionDone"
+                android:layout_marginBottom="24dp"/>
+            <Button
+                android:id="@+id/btnCalculate"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/calculate_1rm"
+                android:layout_marginBottom="32dp"/>
             <TextView
-                android:layout_width="0dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="@string/percent_1rm"
-                android:textStyle="bold"
-                android:textSize="14sp"
-                android:gravity="center"/>
-
+                android:text="@string/estimated_1rm"
+                android:textSize="16sp"
+                android:layout_marginBottom="8dp"/>
             <TextView
-                android:layout_width="0dp"
+                android:id="@+id/tvResult"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="@string/weight"
+                android:text="--"
+                android:textSize="32sp"
                 android:textStyle="bold"
-                android:textSize="14sp"
-                android:gravity="end"/>
+                android:layout_marginBottom="24dp"/>
+            <!-- Table Header -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:paddingBottom="8dp"
+                android:layout_marginBottom="8dp">
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/reps"
+                    android:textStyle="bold"
+                    android:textSize="14sp"/>
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/percent_1rm"
+                    android:textStyle="bold"
+                    android:textSize="14sp"
+                    android:gravity="center"/>
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/weight"
+                    android:textStyle="bold"
+                    android:textSize="14sp"
+                    android:gravity="end"/>
+            </LinearLayout>
+            <!-- Dynamic Container for 1 to 15 Rep Breakdown rows -->
+            <LinearLayout
+                android:id="@+id/layoutBreakdownContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"/>
         </LinearLayout>
-
-        <!-- Dynamic Container for 1 to 15 Rep Breakdown rows -->
-        <LinearLayout
-            android:id="@+id/layoutBreakdownContainer"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"/>
-
-    </LinearLayout>
-</ScrollView>
+    </ScrollView>
+    <!-- AdMob Banner Ad View pinned at the bottom -->
+    <com.google.android.gms.ads.AdView
+        android:id="@+id/adView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        ads:adSize="BANNER"
+        ads:adUnitId="ca-app-pub-3940256099942544/6300978111" />
+</RelativeLayout>
