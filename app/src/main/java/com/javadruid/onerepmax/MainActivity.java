@@ -5,9 +5,12 @@ import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -19,6 +22,11 @@ import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
 import com.google.android.gms.ads.MobileAds;
 import com.google.android.gms.ads.initialization.InitializationStatus;
+import com.javadruid.onerepmax.algorithms.BrzyckiAlgorithm;
+import com.javadruid.onerepmax.algorithms.EpleyAlgorithm;
+import com.javadruid.onerepmax.algorithms.LanderAlgorithm;
+import com.javadruid.onerepmax.algorithms.LombardiAlgorithm;
+import com.javadruid.onerepmax.algorithms.OneRepMaxAlgorithm;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -26,8 +34,10 @@ public class MainActivity extends AppCompatActivity {
     private EditText etReps;
     private TextView tvResult;
     private LinearLayout layoutBreakdownContainer;
-
+    private TextView tvAlgorithmDescription;
     // Standard percentage mapping for reps 1 through 15
+    private OneRepMaxAlgorithm[] algorithms;
+    private OneRepMaxAlgorithm selectedAlgorithm;
     private final int[] percentages = {
             100, 97, 94, 92, 89, 86, 83, 81, 78, 75, 73, 71, 70, 68, 67
     };
@@ -47,6 +57,46 @@ public class MainActivity extends AppCompatActivity {
         tvResult = findViewById(R.id.tvResult);
         layoutBreakdownContainer = findViewById(R.id.layoutBreakdownContainer);
 
+        final Spinner spinnerAlgorithm = findViewById(R.id.spinnerAlgorithm);
+        tvAlgorithmDescription = findViewById(R.id.tvAlgorithmDescription);
+
+        // Setup Algorithms array (Epley is index 0 so it defaults first)
+        algorithms = new OneRepMaxAlgorithm[]{
+                new EpleyAlgorithm(),
+                new BrzyckiAlgorithm(),
+                new LanderAlgorithm(),
+                new LombardiAlgorithm()
+        };
+
+        // Populate Spinner adapter with algorithm names
+        String[] algorithmNames = new String[algorithms.length];
+        for (int i = 0; i < algorithms.length; i++) {
+            algorithmNames[i] = algorithms[i].name();
+        }
+
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(
+                this,
+                android.R.layout.simple_spinner_item,
+                algorithmNames
+        );
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerAlgorithm.setAdapter(adapter);
+
+        // Handle Spinner selection
+        spinnerAlgorithm.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                selectedAlgorithm = algorithms[position];
+                tvAlgorithmDescription.setText(selectedAlgorithm.description());
+                // Recalculate automatically if inputs are valid
+                calculateOneRepMax();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                selectedAlgorithm = algorithms[0]; // Fallback to Epley
+            }
+        });
         // Set click listener for the calculate button
         btnCalculate.setOnClickListener(this::onCalculateClick);
         // Trigger calculation when the user presses "Enter" / "Done" on the keyboard in reps field
@@ -139,9 +189,8 @@ public class MainActivity extends AppCompatActivity {
         return result;
     }
 
-    private static double getOneRepMax(double weight, int reps) {
-        // Epley Formula: Weight * (1 + Reps / 30.0)
-        return weight * (1.0 + (reps / 30.0));
+    private double getOneRepMax(double weight, int reps) {
+        return selectedAlgorithm.getOneRepMax(weight, reps);
     }
 
     private static double getTargetWeight(double oneRepMax, int pct) {
