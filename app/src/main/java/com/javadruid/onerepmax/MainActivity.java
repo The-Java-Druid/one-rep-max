@@ -34,11 +34,10 @@ public class MainActivity extends AppCompatActivity {
     private EditText etReps;
     private TextView tvResult;
     private LinearLayout layoutBreakdownContainer;
-    private TextView tvAlgorithmDescription;
+    private TextView algorithmDescription;
     // Standard percentage mapping for reps 1 through 15
-    private OneRepMaxAlgorithm[] algorithms;
     private OneRepMaxAlgorithm selectedAlgorithm;
-    private final int[] percentages = {
+    private static final int[] percentages = {
             100, 97, 94, 92, 89, 86, 83, 81, 78, 75, 73, 71, 70, 68, 67
     };
 
@@ -53,31 +52,19 @@ public class MainActivity extends AppCompatActivity {
         // Initialize UI components
         etWeight = findViewById(R.id.etWeight);
         etReps = findViewById(R.id.etReps);
-        Button btnCalculate = findViewById(R.id.btnCalculate);
+        final Button btnCalculate = findViewById(R.id.btnCalculate);
         tvResult = findViewById(R.id.tvResult);
         layoutBreakdownContainer = findViewById(R.id.layoutBreakdownContainer);
 
         final Spinner spinnerAlgorithm = findViewById(R.id.spinnerAlgorithm);
-        tvAlgorithmDescription = findViewById(R.id.tvAlgorithmDescription);
+        algorithmDescription = findViewById(R.id.tvAlgorithmDescription);
 
         // Setup Algorithms array (Epley is index 0 so it defaults first)
-        algorithms = new OneRepMaxAlgorithm[]{
-                new EpleyAlgorithm(),
-                new BrzyckiAlgorithm(),
-                new LanderAlgorithm(),
-                new LombardiAlgorithm()
-        };
-
-        // Populate Spinner adapter with algorithm names
-        String[] algorithmNames = new String[algorithms.length];
-        for (int i = 0; i < algorithms.length; i++) {
-            algorithmNames[i] = algorithms[i].name();
-        }
-
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(
+        final OneRepMaxAlgorithm[] algorithms = getOneRepMaxAlgorithms();
+        final ArrayAdapter<OneRepMaxAlgorithm> adapter = new ArrayAdapter<>(
                 this,
                 android.R.layout.simple_spinner_item,
-                algorithmNames
+                algorithms
         );
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerAlgorithm.setAdapter(adapter);
@@ -87,7 +74,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 selectedAlgorithm = algorithms[position];
-                tvAlgorithmDescription.setText(selectedAlgorithm.description());
+                algorithmDescription.setText(selectedAlgorithm.description());
                 // Recalculate automatically if inputs are valid
                 calculateOneRepMax();
             }
@@ -101,6 +88,16 @@ public class MainActivity extends AppCompatActivity {
         btnCalculate.setOnClickListener(this::onCalculateClick);
         // Trigger calculation when the user presses "Enter" / "Done" on the keyboard in reps field
         etReps.setOnEditorActionListener(this::onEditorEnter);    }
+
+    @NonNull
+    private static OneRepMaxAlgorithm[] getOneRepMaxAlgorithms() {
+        return new OneRepMaxAlgorithm[]{
+                new EpleyAlgorithm(),
+                new BrzyckiAlgorithm(),
+                new LanderAlgorithm(),
+                new LombardiAlgorithm()
+        };
+    }
 
     private void onCalculateClick(View v) {
         calculateOneRepMax();
