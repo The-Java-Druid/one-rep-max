@@ -19,10 +19,6 @@ import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.google.android.gms.ads.AdRequest;
-import com.google.android.gms.ads.AdView;
-import com.google.android.gms.ads.MobileAds;
-import com.google.android.gms.ads.initialization.InitializationStatus;
 import com.javadruid.onerepmax.algorithms.BrzyckiAlgorithm;
 import com.javadruid.onerepmax.algorithms.EpleyAlgorithm;
 import com.javadruid.onerepmax.algorithms.LanderAlgorithm;
@@ -54,7 +50,6 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         // Enable edge-to-edge layout for Android 15+
         EdgeToEdge.enable(this);
-        new Thread(this::initializeAds).start();
 
         // Initialize UI components
         etWeight = findViewById(R.id.etWeight);
@@ -226,20 +221,6 @@ public class MainActivity extends AppCompatActivity {
             return true;
         }
         return false;
-    }
-
-    private void initializeAds() {
-        MobileAds.initialize(this, MainActivity::onAdInitialized);
-        runOnUiThread(this::loadAd);
-    }
-
-    private void loadAd() {
-        ((AdView) findViewById(R.id.adView))
-                .loadAd(new AdRequest.Builder().build());
-    }
-
-    private static void onAdInitialized(InitializationStatus initializationStatus) {
-        Log.i("OneRepMax", "Initialized ad manager with status: " + initializationStatus.getAdapterStatusMap());
     }
 
 }
