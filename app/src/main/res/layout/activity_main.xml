@@ -22,6 +22,22 @@
                 android:textSize="24sp"
                 android:textStyle="bold"
                 android:layout_marginBottom="32dp"/>
+            <!-- Algorithm Selection Dropdown (Spinner) -->
+            <Spinner
+                android:id="@+id/spinnerAlgorithm"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp"
+                android:layout_marginBottom="4dp"/>
+            <!-- Algorithm Description Label -->
+            <TextView
+                android:id="@+id/tvAlgorithmDescription"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text=""
+                android:textSize="12sp"
+                android:textColor="?android:attr/textColorSecondary"
+                android:layout_marginBottom="24dp"/>
             <EditText
                 android:id="@+id/etWeight"
                 android:layout_width="match_parent"

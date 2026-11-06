@@ -1,13 +1,17 @@
 package com.javadruid.onerepmax;
 
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -19,18 +23,30 @@ import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
 import com.google.android.gms.ads.MobileAds;
 import com.google.android.gms.ads.initialization.InitializationStatus;
+import com.javadruid.onerepmax.algorithms.BrzyckiAlgorithm;
+import com.javadruid.onerepmax.algorithms.EpleyAlgorithm;
+import com.javadruid.onerepmax.algorithms.LanderAlgorithm;
+import com.javadruid.onerepmax.algorithms.LombardiAlgorithm;
+import com.javadruid.onerepmax.algorithms.OneRepMaxAlgorithm;
+
+import java.util.stream.IntStream;
 
 public class MainActivity extends AppCompatActivity {
+
+    private static final String PREF_NAME = "OneRepMaxPrefs";
+    private static final String KEY_SELECTED_ALGORITHM = "selected_algorithm";
+    private static final int[] percentages = {
+            100, 97, 94, 92, 89, 86, 83, 81, 78, 75, 73, 71, 70, 68, 67
+    };
 
     private EditText etWeight;
     private EditText etReps;
     private TextView tvResult;
     private LinearLayout layoutBreakdownContainer;
-
+    private TextView algorithmDescription;
     // Standard percentage mapping for reps 1 through 15
-    private final int[] percentages = {
-            100, 97, 94, 92, 89, 86, 83, 81, 78, 75, 73, 71, 70, 68, 67
-    };
+    private OneRepMaxAlgorithm selectedAlgorithm;
+    private boolean isInitialized = false; // Prevents saving during initial layout setup
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,14 +59,70 @@ public class MainActivity extends AppCompatActivity {
         // Initialize UI components
         etWeight = findViewById(R.id.etWeight);
         etReps = findViewById(R.id.etReps);
-        Button btnCalculate = findViewById(R.id.btnCalculate);
+        final Button btnCalculate = findViewById(R.id.btnCalculate);
         tvResult = findViewById(R.id.tvResult);
         layoutBreakdownContainer = findViewById(R.id.layoutBreakdownContainer);
 
+        final Spinner spinnerAlgorithm = findViewById(R.id.spinnerAlgorithm);
+        algorithmDescription = findViewById(R.id.tvAlgorithmDescription);
+
+        final OneRepMaxAlgorithm[] algorithms = getOneRepMaxAlgorithms();
+        final ArrayAdapter<OneRepMaxAlgorithm> adapter = new ArrayAdapter<>(
+                this,
+                android.R.layout.simple_spinner_item,
+                algorithms
+        );
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerAlgorithm.setAdapter(adapter);
+
+        // Restore previously saved algorithm preference
+        final SharedPreferences prefs = getSharedPreferences(PREF_NAME, MODE_PRIVATE);
+        final String savedAlgorithmName = prefs.getString(KEY_SELECTED_ALGORITHM, "Epley");
+
+        final int defaultSelectionIndex = IntStream.range(0, algorithms.length)
+                .filter(i -> algorithms[i].name().equals(savedAlgorithmName))
+                .findFirst().orElse(0);
+        // Initialize selectedAlgorithm immediately with the saved choice
+        selectedAlgorithm = algorithms[defaultSelectionIndex];
+        // 1. Attach listener BEFORE setting selection so state stays synchronized
+        spinnerAlgorithm.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                selectedAlgorithm = (OneRepMaxAlgorithm) parent.getItemAtPosition(position);
+                algorithmDescription.setText(selectedAlgorithm.description());
+                // Save preference if user explicitly changed it after initialization
+                if (isInitialized) {
+                    prefs.edit()
+                         .putString(KEY_SELECTED_ALGORITHM, selectedAlgorithm.name())
+                         .apply();
+                }
+                calculateOneRepMax();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                selectedAlgorithm = algorithms[0]; // Fallback to Epley
+            }
+        });
+        // 2. Set the spinner selection (triggers onItemSelected safely with listener active)
+        spinnerAlgorithm.setSelection(defaultSelectionIndex);
+        // 3. Mark initialization complete so future manual selections trigger saves
+        isInitialized = true;
         // Set click listener for the calculate button
         btnCalculate.setOnClickListener(this::onCalculateClick);
         // Trigger calculation when the user presses "Enter" / "Done" on the keyboard in reps field
         etReps.setOnEditorActionListener(this::onEditorEnter);    }
+
+    @NonNull
+    private static OneRepMaxAlgorithm[] getOneRepMaxAlgorithms() {
+        // Setup Algorithms array (Epley is index 0 so it defaults first)
+        return new OneRepMaxAlgorithm[]{
+                new EpleyAlgorithm(),
+                new BrzyckiAlgorithm(),
+                new LanderAlgorithm(),
+                new LombardiAlgorithm()
+        };
+    }
 
     private void onCalculateClick(View v) {
         calculateOneRepMax();
@@ -139,9 +211,8 @@ public class MainActivity extends AppCompatActivity {
         return result;
     }
 
-    private static double getOneRepMax(double weight, int reps) {
-        // Epley Formula: Weight * (1 + Reps / 30.0)
-        return weight * (1.0 + (reps / 30.0));
+    private double getOneRepMax(double weight, int reps) {
+        return selectedAlgorithm.getOneRepMax(weight, reps);
     }
 
     private static double getTargetWeight(double oneRepMax, int pct) {
