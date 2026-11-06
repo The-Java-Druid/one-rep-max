@@ -1,5 +1,6 @@
 package com.javadruid.onerepmax;
 
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -28,7 +29,15 @@ import com.javadruid.onerepmax.algorithms.LanderAlgorithm;
 import com.javadruid.onerepmax.algorithms.LombardiAlgorithm;
 import com.javadruid.onerepmax.algorithms.OneRepMaxAlgorithm;
 
+import java.util.stream.IntStream;
+
 public class MainActivity extends AppCompatActivity {
+
+    private static final String PREF_NAME = "OneRepMaxPrefs";
+    private static final String KEY_SELECTED_ALGORITHM = "selected_algorithm";
+    private static final int[] percentages = {
+            100, 97, 94, 92, 89, 86, 83, 81, 78, 75, 73, 71, 70, 68, 67
+    };
 
     private EditText etWeight;
     private EditText etReps;
@@ -37,9 +46,7 @@ public class MainActivity extends AppCompatActivity {
     private TextView algorithmDescription;
     // Standard percentage mapping for reps 1 through 15
     private OneRepMaxAlgorithm selectedAlgorithm;
-    private static final int[] percentages = {
-            100, 97, 94, 92, 89, 86, 83, 81, 78, 75, 73, 71, 70, 68, 67
-    };
+    private boolean isInitialized = false; // Prevents saving during initial layout setup
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,7 +66,6 @@ public class MainActivity extends AppCompatActivity {
         final Spinner spinnerAlgorithm = findViewById(R.id.spinnerAlgorithm);
         algorithmDescription = findViewById(R.id.tvAlgorithmDescription);
 
-        // Setup Algorithms array (Epley is index 0 so it defaults first)
         final OneRepMaxAlgorithm[] algorithms = getOneRepMaxAlgorithms();
         final ArrayAdapter<OneRepMaxAlgorithm> adapter = new ArrayAdapter<>(
                 this,
@@ -69,13 +75,27 @@ public class MainActivity extends AppCompatActivity {
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerAlgorithm.setAdapter(adapter);
 
-        // Handle Spinner selection
+        // Restore previously saved algorithm preference
+        final SharedPreferences prefs = getSharedPreferences(PREF_NAME, MODE_PRIVATE);
+        final String savedAlgorithmName = prefs.getString(KEY_SELECTED_ALGORITHM, "Epley");
+
+        final int defaultSelectionIndex = IntStream.range(0, algorithms.length)
+                .filter(i -> algorithms[i].name().equals(savedAlgorithmName))
+                .findFirst().orElse(0);
+        // Initialize selectedAlgorithm immediately with the saved choice
+        selectedAlgorithm = algorithms[defaultSelectionIndex];
+        // 1. Attach listener BEFORE setting selection so state stays synchronized
         spinnerAlgorithm.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                selectedAlgorithm = algorithms[position];
+                selectedAlgorithm = (OneRepMaxAlgorithm) parent.getItemAtPosition(position);
                 algorithmDescription.setText(selectedAlgorithm.description());
-                // Recalculate automatically if inputs are valid
+                // Save preference if user explicitly changed it after initialization
+                if (isInitialized) {
+                    prefs.edit()
+                         .putString(KEY_SELECTED_ALGORITHM, selectedAlgorithm.name())
+                         .apply();
+                }
                 calculateOneRepMax();
             }
 
@@ -84,6 +104,10 @@ public class MainActivity extends AppCompatActivity {
                 selectedAlgorithm = algorithms[0]; // Fallback to Epley
             }
         });
+        // 2. Set the spinner selection (triggers onItemSelected safely with listener active)
+        spinnerAlgorithm.setSelection(defaultSelectionIndex);
+        // 3. Mark initialization complete so future manual selections trigger saves
+        isInitialized = true;
         // Set click listener for the calculate button
         btnCalculate.setOnClickListener(this::onCalculateClick);
         // Trigger calculation when the user presses "Enter" / "Done" on the keyboard in reps field
@@ -91,6 +115,7 @@ public class MainActivity extends AppCompatActivity {
 
     @NonNull
     private static OneRepMaxAlgorithm[] getOneRepMaxAlgorithms() {
+        // Setup Algorithms array (Epley is index 0 so it defaults first)
         return new OneRepMaxAlgorithm[]{
                 new EpleyAlgorithm(),
                 new BrzyckiAlgorithm(),
