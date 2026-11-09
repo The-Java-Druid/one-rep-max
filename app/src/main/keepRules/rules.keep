@@ -4,6 +4,23 @@
 # For more details, see
 #   https://d.android.com/r/tools/r8/keep-rules
 
+# Keep androidx.startup InitializationProvider and Initializer implementations loaded reflectively
+-keep public class androidx.startup.InitializationProvider {
+    public <init>();
+}
+-keep public class * implements androidx.startup.Initializer {
+    public <init>();
+}
+# Prevent R8 / Proguard from obfuscating Room generated classes
+-keep class * extends androidx.room.RoomDatabase { *; }
+-keepclassmembers class * extends androidx.room.RoomDatabase {
+    <init>(...);
+}
+
+# Keep WorkManager initialization components
+-keep class androidx.work.impl.WorkDatabase_Impl { *; }
+-keep class * extends androidx.work.Worker { *; }
+-keep class * extends androidx.work.ListenableWorker { *; }
 # If your project uses WebView with JS, uncomment the following
 # and specify the fully qualified class name to the JavaScript interface
 # class:

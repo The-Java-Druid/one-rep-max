@@ -25,7 +25,7 @@ android {
             isShrinkResources = true
             optimization {
                 enable = true
-                packageScope = setOf("androidx.**", "kotlin.**", "kotlinx.**")
+                packageScope = setOf("com.javadruid.onerepmax.**", "androidx.**", "kotlin.**", "kotlinx.**")
             }
         }
     }
