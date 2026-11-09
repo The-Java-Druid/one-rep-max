@@ -11,6 +11,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.LinearLayout.LayoutParams;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -33,11 +34,21 @@ import java.util.stream.IntStream;
 
 public class MainActivity extends AppCompatActivity {
 
+    public static final OneRepMaxAlgorithm[] ALGORITHMS = new OneRepMaxAlgorithm[]{
+            new EpleyAlgorithm(),
+            new BrzyckiAlgorithm(),
+            new LanderAlgorithm(),
+            new LombardiAlgorithm()
+    };
     private static final String PREF_NAME = "OneRepMaxPrefs";
     private static final String KEY_SELECTED_ALGORITHM = "selected_algorithm";
     private static final int[] percentages = {
-            100, 97, 94, 92, 89, 86, 83, 81, 78, 75, 73, 71, 70, 68, 67
+            100, 95, 93, 90, 87, 85, 83, 80, 77, 75, 73, 70, 67, 65, 60
     };
+    public static final LayoutParams LAYOUT_PARAMS = new LayoutParams(
+            LayoutParams.MATCH_PARENT,
+            LayoutParams.WRAP_CONTENT
+    );
 
     private EditText etWeight;
     private EditText etReps;
@@ -59,31 +70,15 @@ public class MainActivity extends AppCompatActivity {
         // Initialize UI components
         etWeight = findViewById(R.id.etWeight);
         etReps = findViewById(R.id.etReps);
-        final Button btnCalculate = findViewById(R.id.btnCalculate);
         tvResult = findViewById(R.id.tvResult);
         layoutBreakdownContainer = findViewById(R.id.layoutBreakdownContainer);
-
-        final Spinner spinnerAlgorithm = findViewById(R.id.spinnerAlgorithm);
         algorithmDescription = findViewById(R.id.tvAlgorithmDescription);
-
-        final OneRepMaxAlgorithm[] algorithms = getOneRepMaxAlgorithms();
-        final ArrayAdapter<OneRepMaxAlgorithm> adapter = new ArrayAdapter<>(
-                this,
-                android.R.layout.simple_spinner_item,
-                algorithms
-        );
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinnerAlgorithm.setAdapter(adapter);
-
+        final Spinner spinnerAlgorithm = getSpinnerAlgorithm();
         // Restore previously saved algorithm preference
         final SharedPreferences prefs = getSharedPreferences(PREF_NAME, MODE_PRIVATE);
-        final String savedAlgorithmName = prefs.getString(KEY_SELECTED_ALGORITHM, "Epley");
-
-        final int defaultSelectionIndex = IntStream.range(0, algorithms.length)
-                .filter(i -> algorithms[i].name().equals(savedAlgorithmName))
-                .findFirst().orElse(0);
+        final int defaultSelectionIndex = getDefaultSelectionIndex(prefs);
         // Initialize selectedAlgorithm immediately with the saved choice
-        selectedAlgorithm = algorithms[defaultSelectionIndex];
+        selectedAlgorithm = ALGORITHMS[defaultSelectionIndex];
         // 1. Attach listener BEFORE setting selection so state stays synchronized
         spinnerAlgorithm.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
@@ -101,7 +96,7 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onNothingSelected(AdapterView<?> parent) {
-                selectedAlgorithm = algorithms[0]; // Fallback to Epley
+                selectedAlgorithm = ALGORITHMS[0]; // Fallback to Epley
             }
         });
         // 2. Set the spinner selection (triggers onItemSelected safely with listener active)
@@ -109,19 +104,34 @@ public class MainActivity extends AppCompatActivity {
         // 3. Mark initialization complete so future manual selections trigger saves
         isInitialized = true;
         // Set click listener for the calculate button
-        btnCalculate.setOnClickListener(this::onCalculateClick);
+        findViewById(R.id.btnCalculate).setOnClickListener(this::onCalculateClick);
         // Trigger calculation when the user presses "Enter" / "Done" on the keyboard in reps field
-        etReps.setOnEditorActionListener(this::onEditorEnter);    }
+        etReps.setOnEditorActionListener(this::onEditorEnter);
+    }
+
+    private static int getDefaultSelectionIndex(SharedPreferences prefs) {
+        final String savedAlgorithmName = prefs.getString(KEY_SELECTED_ALGORITHM, "Epley");
+        return IntStream.range(0, ALGORITHMS.length)
+                .filter(i -> ALGORITHMS[i].name().equals(savedAlgorithmName))
+                .findFirst().orElse(0);
+    }
 
     @NonNull
-    private static OneRepMaxAlgorithm[] getOneRepMaxAlgorithms() {
-        // Setup Algorithms array (Epley is index 0 so it defaults first)
-        return new OneRepMaxAlgorithm[]{
-                new EpleyAlgorithm(),
-                new BrzyckiAlgorithm(),
-                new LanderAlgorithm(),
-                new LombardiAlgorithm()
-        };
+    private Spinner getSpinnerAlgorithm() {
+        final Spinner spinnerAlgorithm = findViewById(R.id.spinnerAlgorithm);
+        spinnerAlgorithm.setAdapter(createAdapter());
+        return spinnerAlgorithm;
+    }
+
+    @NonNull
+    private ArrayAdapter<OneRepMaxAlgorithm> createAdapter() {
+        final ArrayAdapter<OneRepMaxAlgorithm> adapter = new ArrayAdapter<>(
+                this,
+                android.R.layout.simple_spinner_item,
+                ALGORITHMS
+        );
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        return adapter;
     }
 
     private void onCalculateClick(View v) {
@@ -129,33 +139,26 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void calculateOneRepMax() {
-        String weightStr = etWeight.getText().toString().trim();
-        String repsStr = etReps.getText().toString().trim();
-
+        final String weightStr = etWeight.getText().toString().trim();
+        final String repsStr = etReps.getText().toString().trim();
         // Validate inputs are not empty
         if (weightStr.isEmpty() || repsStr.isEmpty()) {
             Toast.makeText(this, "Please enter both weight and reps", Toast.LENGTH_SHORT).show();
             return;
         }
-
         try {
-            double weight = Double.parseDouble(weightStr);
-            int reps = Integer.parseInt(repsStr);
-
+            final double weight = Double.parseDouble(weightStr);
+            final int reps = Integer.parseInt(repsStr);
             if (weight <= 0 || reps <= 0) {
                 tvResult.setText("--");
                 layoutBreakdownContainer.removeAllViews();
                 return;
             }
-
             final double oneRepMax = getOneRepMax(weight, reps);
-
             // Format and display result
             tvResult.setText(String.format("%.1f", oneRepMax));
-
             // Populate the 1 to 15 rep breakdown table
             populateBreakdownTable(oneRepMax);
-
         } catch (NumberFormatException e) {
             Toast.makeText(this, "Please enter valid numbers", Toast.LENGTH_SHORT).show();
         }
@@ -172,40 +175,34 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void populateRow(int pct, int repNum, double targetWeight) {
-        final LinearLayout rowLayout = createRowLayout();
-        // Reps Text
-        final TextView tvRepCol = createTextView(String.valueOf(repNum));
-        // Percentage Text
-        final TextView tvPctCol = createTextView(pct + "%");
-        tvPctCol.setGravity(android.view.Gravity.CENTER);
-        // Target Weight Text
-        final TextView tvWeightCol = createTextView(String.format("%.1f", targetWeight));
-        tvWeightCol.setGravity(android.view.Gravity.END);
-        // Add columns to row
-        rowLayout.addView(tvRepCol);
-        rowLayout.addView(tvPctCol);
-        rowLayout.addView(tvWeightCol);
         // Add row to container
-        layoutBreakdownContainer.addView(rowLayout);
+        layoutBreakdownContainer.addView(createRowLayout(pct, repNum, targetWeight));
     }
 
     @NonNull
-    private LinearLayout createRowLayout() {
+    private LinearLayout createRowLayout(int pct, int repNum, double targetWeight) {
         // Create a horizontal row layout for each rep level
         final LinearLayout result = new LinearLayout(this);
-        result.setLayoutParams(new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-        ));
+        result.setLayoutParams(LAYOUT_PARAMS);
         result.setOrientation(LinearLayout.HORIZONTAL);
         result.setPadding(0, 8, 0, 8);
+        // Percentage Text
+        final TextView pctCol = createTextView(pct + "%");
+        pctCol.setGravity(android.view.Gravity.CENTER);
+        // Target Weight Text
+        final TextView weightCol = createTextView(String.format("%.1f", targetWeight));
+        weightCol.setGravity(android.view.Gravity.END);
+        // Reps Text
+        result.addView(createTextView(String.valueOf(repNum)));
+        result.addView(pctCol);
+        result.addView(weightCol);
         return result;
     }
 
     @NonNull
     private TextView createTextView(String text) {
         final TextView result = new TextView(this);
-        result.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+        result.setLayoutParams(new LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f));
         result.setTextSize(14);
         result.setText(text);
         return result;
