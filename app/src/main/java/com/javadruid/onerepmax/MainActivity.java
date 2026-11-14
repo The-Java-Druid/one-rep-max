@@ -8,7 +8,6 @@ import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.LinearLayout.LayoutParams;
@@ -156,7 +155,7 @@ public class MainActivity extends AppCompatActivity {
             }
             final double oneRepMax = getOneRepMax(weight, reps);
             // Format and display result
-            tvResult.setText(String.format("%.1f", oneRepMax));
+            tvResult.setText(getFormattedWeight(oneRepMax));
             // Populate the 1 to 15 rep breakdown table
             populateBreakdownTable(oneRepMax);
         } catch (NumberFormatException e) {
@@ -190,13 +189,18 @@ public class MainActivity extends AppCompatActivity {
         final TextView pctCol = createTextView(pct + "%");
         pctCol.setGravity(android.view.Gravity.CENTER);
         // Target Weight Text
-        final TextView weightCol = createTextView(String.format("%.1f", targetWeight));
+        final TextView weightCol = createTextView(getFormattedWeight(targetWeight));
         weightCol.setGravity(android.view.Gravity.END);
         // Reps Text
         result.addView(createTextView(String.valueOf(repNum)));
         result.addView(pctCol);
         result.addView(weightCol);
         return result;
+    }
+
+    @NonNull
+    private static String getFormattedWeight(double targetWeight) {
+        return String.format("%.1f", targetWeight);
     }
 
     @NonNull
