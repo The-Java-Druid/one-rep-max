@@ -199,8 +199,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @NonNull
-    private static String getFormattedWeight(double targetWeight) {
-        return String.format("%.1f", targetWeight);
+    private static String getFormattedWeight(double weight) {
+        return String.format("%.1f", weight);
     }
 
     @NonNull
