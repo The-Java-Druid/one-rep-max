@@ -42,6 +42,7 @@ dependencies {
     implementation(libs.material)
     implementation(libs.play.services.ads)
     testImplementation(libs.junit)
+    testImplementation(libs.mockito.core)
     androidTestImplementation(libs.espresso.core)
     androidTestImplementation(libs.ext.junit)
 }
