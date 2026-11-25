@@ -1,6 +1,5 @@
 package com.javadruid.onerepmax;
 
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -25,17 +24,17 @@ import com.google.android.gms.ads.MobileAds;
 import com.google.android.gms.ads.initialization.InitializationStatus;
 import com.javadruid.onerepmax.algorithms.AlgorithmRegistry;
 import com.javadruid.onerepmax.algorithms.OneRepMaxAlgorithm;
+import com.javadruid.onerepmax.preferences.OneRepMaxPreferences;
 
 public class MainActivity extends AppCompatActivity {
 
     private static final String PREF_NAME = "OneRepMaxPrefs";
-    private static final String KEY_SELECTED_ALGORITHM = "selected_algorithm";
     private static final int[] percentages = {
             100, 95, 93, 90, 87, 85, 83, 80, 77, 75, 73, 70, 67, 65, 60
     };
     private static final AlgorithmRegistry ALGORITHM_REGISTRY = new AlgorithmRegistry();
 
-    public static final LayoutParams LAYOUT_PARAMS = new LayoutParams(
+    private static final LayoutParams LAYOUT_PARAMS = new LayoutParams(
             LayoutParams.MATCH_PARENT,
             LayoutParams.WRAP_CONTENT
     );
@@ -48,6 +47,7 @@ public class MainActivity extends AppCompatActivity {
     // Standard percentage mapping for reps 1 through 15
     private OneRepMaxAlgorithm selectedAlgorithm;
     private boolean isInitialized = false; // Prevents saving during initial layout setup
+    private OneRepMaxPreferences preferences;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,6 +56,7 @@ public class MainActivity extends AppCompatActivity {
         // Enable edge-to-edge layout for Android 15+
         EdgeToEdge.enable(this);
         new Thread(this::initializeAds).start();
+        preferences = new OneRepMaxPreferences(getSharedPreferences(PREF_NAME, MODE_PRIVATE));
 
         // Initialize UI components
         etWeight = findViewById(R.id.etWeight);
@@ -65,8 +66,7 @@ public class MainActivity extends AppCompatActivity {
         algorithmDescription = findViewById(R.id.tvAlgorithmDescription);
         final Spinner spinnerAlgorithm = getSpinnerAlgorithm();
         // Restore previously saved algorithm preference
-        final SharedPreferences prefs = getSharedPreferences(PREF_NAME, MODE_PRIVATE);
-        final int defaultSelectionIndex = getDefaultSelectionIndex(prefs);
+        final int defaultSelectionIndex = ALGORITHM_REGISTRY.getAlgorithmIndex(preferences.getSavedAlgorithmName());;
         // Initialize selectedAlgorithm immediately with the saved choice
         selectedAlgorithm = ALGORITHM_REGISTRY.getAlgorithm(defaultSelectionIndex).get();
         // 1. Attach listener BEFORE setting selection so state stays synchronized
@@ -77,9 +77,7 @@ public class MainActivity extends AppCompatActivity {
                 algorithmDescription.setText(selectedAlgorithm.description());
                 // Save preference if user explicitly changed it after initialization
                 if (isInitialized) {
-                    prefs.edit()
-                         .putString(KEY_SELECTED_ALGORITHM, selectedAlgorithm.name())
-                         .apply();
+                    preferences.setSavedAlgorithmName(selectedAlgorithm.name());
                 }
                 calculateOneRepMax();
             }
@@ -97,11 +95,6 @@ public class MainActivity extends AppCompatActivity {
         findViewById(R.id.btnCalculate).setOnClickListener(this::onCalculateClick);
         // Trigger calculation when the user presses "Enter" / "Done" on the keyboard in reps field
         etReps.setOnEditorActionListener(this::onEditorEnter);
-    }
-
-    private static int getDefaultSelectionIndex(SharedPreferences prefs) {
-        final String savedAlgorithmName = prefs.getString(KEY_SELECTED_ALGORITHM, "");
-        return ALGORITHM_REGISTRY.getAlgorithmIndex(savedAlgorithmName);
     }
 
     @NonNull
