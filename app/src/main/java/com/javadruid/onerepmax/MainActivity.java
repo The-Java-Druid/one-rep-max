@@ -23,27 +23,18 @@ import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
 import com.google.android.gms.ads.MobileAds;
 import com.google.android.gms.ads.initialization.InitializationStatus;
-import com.javadruid.onerepmax.algorithms.BrzyckiAlgorithm;
-import com.javadruid.onerepmax.algorithms.EpleyAlgorithm;
-import com.javadruid.onerepmax.algorithms.LanderAlgorithm;
-import com.javadruid.onerepmax.algorithms.LombardiAlgorithm;
+import com.javadruid.onerepmax.algorithms.AlgorithmRegistry;
 import com.javadruid.onerepmax.algorithms.OneRepMaxAlgorithm;
-
-import java.util.stream.IntStream;
 
 public class MainActivity extends AppCompatActivity {
 
-    public static final OneRepMaxAlgorithm[] ALGORITHMS = new OneRepMaxAlgorithm[]{
-            new EpleyAlgorithm(),
-            new BrzyckiAlgorithm(),
-            new LanderAlgorithm(),
-            new LombardiAlgorithm()
-    };
     private static final String PREF_NAME = "OneRepMaxPrefs";
     private static final String KEY_SELECTED_ALGORITHM = "selected_algorithm";
     private static final int[] percentages = {
             100, 95, 93, 90, 87, 85, 83, 80, 77, 75, 73, 70, 67, 65, 60
     };
+    private static final AlgorithmRegistry ALGORITHM_REGISTRY = new AlgorithmRegistry();
+
     public static final LayoutParams LAYOUT_PARAMS = new LayoutParams(
             LayoutParams.MATCH_PARENT,
             LayoutParams.WRAP_CONTENT
@@ -77,7 +68,7 @@ public class MainActivity extends AppCompatActivity {
         final SharedPreferences prefs = getSharedPreferences(PREF_NAME, MODE_PRIVATE);
         final int defaultSelectionIndex = getDefaultSelectionIndex(prefs);
         // Initialize selectedAlgorithm immediately with the saved choice
-        selectedAlgorithm = ALGORITHMS[defaultSelectionIndex];
+        selectedAlgorithm = ALGORITHM_REGISTRY.getAlgorithm(defaultSelectionIndex).get();
         // 1. Attach listener BEFORE setting selection so state stays synchronized
         spinnerAlgorithm.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
@@ -95,7 +86,7 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onNothingSelected(AdapterView<?> parent) {
-                selectedAlgorithm = ALGORITHMS[0]; // Fallback to Epley
+                selectedAlgorithm = ALGORITHM_REGISTRY.getAlgorithm(); // Fallback to Epley
             }
         });
         // 2. Set the spinner selection (triggers onItemSelected safely with listener active)
@@ -109,10 +100,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private static int getDefaultSelectionIndex(SharedPreferences prefs) {
-        final String savedAlgorithmName = prefs.getString(KEY_SELECTED_ALGORITHM, "Epley");
-        return IntStream.range(0, ALGORITHMS.length)
-                .filter(i -> ALGORITHMS[i].name().equals(savedAlgorithmName))
-                .findFirst().orElse(0);
+        final String savedAlgorithmName = prefs.getString(KEY_SELECTED_ALGORITHM, "");
+        return ALGORITHM_REGISTRY.getAlgorithmIndex(savedAlgorithmName);
     }
 
     @NonNull
@@ -127,7 +116,7 @@ public class MainActivity extends AppCompatActivity {
         final ArrayAdapter<OneRepMaxAlgorithm> adapter = new ArrayAdapter<>(
                 this,
                 android.R.layout.simple_spinner_item,
-                ALGORITHMS
+                ALGORITHM_REGISTRY.getAlgorithms()
         );
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         return adapter;
